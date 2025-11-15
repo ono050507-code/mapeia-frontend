@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>MAPEIA+: Sua nova maneira de interagir com a cidade</title>
+        <link rel="stylesheet" href="css mapeia+.css">
+
+        <style>
+            #registro-form {
+                margin-top: 20px;
+                padding-top: 20px;
+                border-top: 1px solid #ccc;
+            }
+            #mensagem-login, #mensagem-registro {
+                font-weight: bold;
+                font-size: 1.1em;
+            }
+        </style>
+    </head>
+    <body>
+
+        <div id = "headerina">Noticias | Serviços | Contatos | Transparência </div>
+        <div id="Tagline">
+            <h1><p>MAPEIA+</p></h1>
+            <h2><p>Sua nova maneira de interagir com o trânsito da cidade.</p></h2>
+        </div>
+
+        <div id="login">
+            <form id="form-login">
+                <h3>Acessar sua conta</h3>
+                <label for="usuario-login"> <p> Usuário (Email): </p> </label>
+                <input type="email" id="usuario-login" name="usuario-login" required><br>
+                
+                <label for="senha-login"> <p> Senha: </p></label>
+                <input type="password" id="senha-login" name="senha-login" required><br>
+                
+                <button type="submit">Entrar</button>
+                
+                <p id="mensagem-login"></p>
+            </form>
+        </div>
+
+        <div id="registro-form">
+            <form id="form-registro">
+                <h3>Não possui conta? Registre-se.</h3>
+                
+                <label for="nome-reg"> <p> Nome: </p> </label>
+                <input type="text" id="nome-reg" name="nome-reg" required><br>
+        
+                <label for="email-reg"> <p> Email: </p> </label>
+                <input type="email" id="email-reg" name="email-reg" required><br>
+        
+                <label for="senha-reg"> <p> Senha: </p></label>
+                <input type="password" id="senha-reg" name="senha-reg" required><br>
+                
+                <button type="submit">Registrar</button>
+                
+                <p id="mensagem-registro"></p>
+            </form>
+        </div>
+
+        <P>
+            
+        <div id = "parent act"><h1> Áreas de atuação</h1></div>
+        <div id = "act1"><P> Sinalização</P></div>
+        <div id="act2"><P> Asfaltamento</P></div>
+        <div id="act3"><P> Fluxo de trânsito</P></div>
+
+        <script>
+            document.getElementById("form-login").addEventListener("submit", function(event) {
+                event.preventDefault(); 
+
+                const emailInput = document.getElementById("usuario-login");
+                const senhaInput = document.getElementById("senha-login");
+                const mensagem = document.getElementById("mensagem-login");
+
+                const dadosLogin = {
+                    email: emailInput.value,
+                    senha: senhaInput.value
+                };
+
+                fetch('https://denunciaapi.onrender.com/api/usuarios/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosLogin) 
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json(); 
+                    } else {
+                        throw new Error('Email ou senha incorretos.');
+                    }
+                })
+                .then(usuarioLogado => {
+                    localStorage.setItem('usuario_id', usuarioLogado.id);
+                    localStorage.setItem('usuario_nome', usuarioLogado.nome);
+                    window.location.href = 'denuncias.html'; 
+                })
+                .catch(error => {
+                    mensagem.textContent = error.message;
+                    mensagem.style.color = 'red';
+                });
+            });
+
+            document.getElementById("form-registro").addEventListener("submit", function(event) {
+                event.preventDefault(); 
+
+                const nomeInput = document.getElementById("nome-reg");
+                const emailInput = document.getElementById("email-reg");
+                const senhaInput = document.getElementById("senha-reg");
+                const mensagem = document.getElementById("mensagem-registro");
+
+                const dadosUsuario = {
+                    nome: nomeInput.value,
+                    email: emailInput.value,
+                    senha: senhaInput.value
+                };
+
+                fetch('https://denunciaapi.onrender.com/api/usuarios', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(dadosUsuario)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Erro ao cadastrar. Tente outro email.');
+                    }
+                })
+                .then(usuarioCriado => {
+                    mensagem.textContent = 'Usuário ' + usuarioCriado.nome + ' criado com sucesso! Faça o login.';
+                    mensagem.style.color = 'green';
+                    nomeInput.value = '';
+                    emailInput.value = '';
+                    senhaInput.value = '';
+                })
+                .catch(error => {
+                    mensagem.textContent = error.message;
+                    mensagem.style.color = 'red';
+                });
+            });
+
+
+
+
+
+
+
+        </script>
+    </body>
+</html>
