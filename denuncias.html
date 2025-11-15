@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Minhas Denúncias - MAPEIA+</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        hr {
+            margin: 20px 0;
+        }
+        #form-denuncia {
+            background-color: #f4f4f4;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 500px;
+        }
+        #form-denuncia label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #form-denuncia input[type="text"],
+        #form-denuncia textarea,
+        #form-denuncia select { /* Adicionado estilo para o select */
+            width: 95%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: Arial, sans-serif; /* Garante a mesma fonte */
+        }
+        #form-denuncia textarea {
+            height: 100px; /* Altura para a descrição */
+        }
+        #form-denuncia button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        #form-denuncia button:hover {
+            background-color: #0056b3;
+        }
+        #lista-denuncias .denuncia-item {
+            border: 1px solid #ddd;
+            background-color: #fafafa;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 5px;
+        }
+        #lista-denuncias h3 {
+            margin-top: 0;
+        }
+        #link-sair {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 12px;
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        #link-sair:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Minhas Denúncias</h1>
+    <p>Bem-vindo, <strong id="nome-usuario">Usuário</strong>!</p>
+    
+    <a href="mapeia+ landing page.html" id="link-sair">Sair (Logout)</a>
+
+    <hr>
+
+    <h2>Registrar Nova Denúncia</h2>
+    <form id="form-denuncia">
+        
+        <label for="tipo-problema">Tipo de Problema:</label>
+        <select id="tipo-problema" name="tipo-problema" required>
+            <option value="">-- Selecione uma opção --</option>
+            <option value="Transito">Trânsito</option>
+            <option value="Bueiros">Bueiros / Esgoto</option>
+            <option value="Falta de Iluminacao">Falta de Iluminação</option>
+            <option value="Sinalizacao">Sinalização (Placas/Semáforos)</option>
+            <option value="Outro">Outro</option>
+        </select>
+
+        <label for="endereco">Endereço (Rua, Número, Bairro):</label>
+        <input type="text" id="endereco" placeholder="Ex: Av. Principal, 123, Centro" required>
+
+        <label for="ponto-referencia">Ponto de Referência (Opcional):</label>
+        <input type="text" id="ponto-referencia" placeholder="Ex: Perto da padaria Sonho Bom">
+
+        <label for="descricao">Descrição do Problema:</label>
+        <textarea id="descricao" placeholder="Descreva o que você está vendo..." required></textarea>
+        
+        <button type="submit">Enviar Denúncia</button>
+    </form>
+    
+    <hr>
+
+    <h2>Meu Relatório de Denúncias</h2>
+    <div id="lista-denuncias">
+        <p id="loading-msg">Carregando denúncias...</p>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            const usuarioId = localStorage.getItem('usuario_id');
+            const usuarioNome = localStorage.getItem('usuario_nome');
+
+            if (!usuarioId) {
+                alert('Você precisa estar logado para ver esta página.');
+                window.location.href = 'mapeia+ landing page.html';
+                return;
+            }
+
+            document.getElementById('nome-usuario').textContent = usuarioNome;
+            
+            const apiUrl = 'https://denunciaapi.onrender.com';
+            const listaDiv = document.getElementById('lista-denuncias');
+            const loadingMsg = document.getElementById('loading-msg');
+
+            // ##### SCRIPT DE CARREGAR DENÚNCIAS MODIFICADO #####
+            async function carregarDenuncias() {
+                loadingMsg.style.display = 'block';
+                listaDiv.innerHTML = '';
+
+                try {
+                    const response = await fetch(`${apiUrl}/por-usuario/${usuarioId}`);
+
+                    if (!response.ok) {
+                        throw new Error('Falha ao carregar denúncias.');
+                    }
+                    
+                    const denuncias = await response.json();
+                    loadingMsg.style.display = 'none';
+
+                    if (denuncias.length === 0) {
+                        listaDiv.innerHTML = '<p>Nenhuma denúncia registrada ainda.</p>';
+                        return;
+                    }
+
+                    denuncias.forEach(denuncia => {
+                        const item = document.createElement('div');
+                        item.className = 'denuncia-item';
+                        
+                        // Atualizado para mostrar os campos novos
+                        item.innerHTML = `
+                            <h3>${denuncia.tipoProblema} (#${denuncia.id})</h3>
+                            <p><strong>Endereço:</strong> ${denuncia.endereco}</p>
+                            <p><strong>Descrição:</strong> ${denuncia.descricao}</p>
+                        `;
+                        listaDiv.appendChild(item);
+                    });
+
+                } catch (error) {
+                    loadingMsg.style.display = 'none';
+                    listaDiv.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                }
+            }
+
+            // ##### SCRIPT DE SUBMIT MODIFICADO #####
+            document.getElementById('form-denuncia').addEventListener('submit', async function(event) {
+                event.preventDefault();
+
+                // 1. Pega os dados dos NOVOS campos do formulário
+                const dadosDenuncia = {
+                    tipoProblema: document.getElementById('tipo-problema').value,
+                    endereco: document.getElementById('endereco').value,
+                    pontoReferencia: document.getElementById('ponto-referencia').value,
+                    descricao: document.getElementById('descricao').value
+                };
+
+                try {
+                    const response = await fetch(`${apiUrl}/${usuarioId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(dadosDenuncia)
+                    });
+
+                    if (response.ok) {
+                        const denunciaSalva = await response.json();
+                        
+                        // Redireciona para a página de relatório detalhado
+                        window.location.href = `relatorio-detalhado.html?id=${denunciaSalva.id}`;
+                        
+                    } else {
+                        throw new Error('Erro ao registrar denúncia. Verifique os dados.');
+                    }
+
+                } catch (error) {
+                    alert(error.message);
+                }
+            });
+
+            document.getElementById('link-sair').addEventListener('click', function() {
+                localStorage.removeItem('usuario_id');
+                localStorage.removeItem('usuario_nome');
+            });
+
+            carregarDenuncias();
+        });
+    </script>
+</body>
+</html>
